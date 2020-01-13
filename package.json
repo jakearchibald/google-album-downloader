@@ -7,8 +7,6 @@
     "serve": "http-server -c-1 .build-tmp/output"
   },
   "devDependencies": {
-    "@types/gapi": "0.0.39",
-    "@types/gapi.auth2": "0.0.51",
     "cssnano": "^4.1.10",
     "del": "^5.1.0",
     "glob": "^7.1.6",

@@ -2,7 +2,7 @@
   "extends": "../generic-tsconfig.json",
   "compilerOptions": {
     "lib": ["esnext", "dom", "dom.iterable"],
-    "types": ["@types/gapi", "@types/gapi.auth2"]
+    "types": []
   },
   "include": ["./**/*"]
 }

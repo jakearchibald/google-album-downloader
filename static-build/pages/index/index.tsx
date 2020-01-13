@@ -23,7 +23,6 @@ const IndexPage: FunctionalComponent = () => {
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         {/* TODO: favicon */}
         <link rel="stylesheet" href={cssPath} />
-        <script defer src="https://apis.google.com/js/platform.js"></script>
         <script type="module" src={bundleURL} />
         {imports.map(i => (
           // @ts-ignore https://github.com/preactjs/preact/pull/2068
