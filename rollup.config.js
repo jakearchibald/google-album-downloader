@@ -24,7 +24,7 @@ import resolveDirsPlugin from './lib/resolve-dirs-plugin';
 import runScript from './lib/run-script';
 
 function resolveFileUrl({ fileName }) {
-  return JSON.stringify(fileName.replace(/^output\//, ''));
+  return JSON.stringify(fileName.replace(/^output\//, '/'));
 }
 
 export default async function({ watch }) {

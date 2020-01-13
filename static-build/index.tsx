@@ -24,12 +24,17 @@ const toOutput = {
 
 Promise.all(
   Object.entries(toOutput).map(async ([path, content]) => {
-    await fsp.writeFile(
-      joinPath('.build-tmp', 'output', ...path.split('/')),
-      content,
-      {
+    const fullPath = joinPath('.build-tmp', 'output', ...path.split('/'));
+    try {
+      await fsp.writeFile(fullPath, content, {
         encoding: 'utf8',
-      },
-    );
+      });
+    } catch (err) {
+      console.error('Failed to write ' + fullPath);
+      throw err;
+    }
   }),
-);
+).catch(err => {
+  console.error(err);
+  process.exit(1);
+});
