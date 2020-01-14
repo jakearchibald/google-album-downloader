@@ -17,14 +17,18 @@ import { h } from 'preact';
 
 import { renderPage } from './render';
 import IndexPage from './pages/index';
+import LoginPage from './pages/login';
 
 const toOutput = {
   'index.html': renderPage(<IndexPage />),
+  'login/index.html': renderPage(<LoginPage />),
 };
 
 Promise.all(
   Object.entries(toOutput).map(async ([path, content]) => {
-    const fullPath = joinPath('.build-tmp', 'output', ...path.split('/'));
+    const pathParts = ['.build-tmp', 'output', ...path.split('/')];
+    await fsp.mkdir(joinPath(...pathParts.slice(0, -1)), { recursive: true });
+    const fullPath = joinPath(...pathParts);
     try {
       await fsp.writeFile(fullPath, content, {
         encoding: 'utf8',

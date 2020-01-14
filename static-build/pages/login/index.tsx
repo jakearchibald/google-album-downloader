@@ -12,28 +12,25 @@
  */
 import { h, FunctionalComponent } from 'preact';
 
-import cssPath from 'css:./styles.css';
-import bundleURL, { imports } from 'client-bundle:client/index/index.tsx';
+import bundleURL, { imports } from 'client-bundle:client/login/index.ts';
 
-const IndexPage: FunctionalComponent = () => {
+const LoginPage: FunctionalComponent = () => {
   return (
     <html>
       <head>
-        <title>Google Photos Album Downloader</title>
+        <title>Logging in…</title>
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         {/* TODO: favicon */}
-        <link rel="stylesheet" href={cssPath} />
         <script type="module" src={bundleURL} />
         {imports.map(v => (
           <link rel="preload" as="script" href={v} crossOrigin="" />
         ))}
       </head>
       <body>
-        <h1>Photo downloader</h1>
-        <div class="app"></div>
+        <p>Logging in…</p>
       </body>
     </html>
   );
 };
 
-export default IndexPage;
+export default LoginPage;
