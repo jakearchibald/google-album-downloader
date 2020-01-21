@@ -11,59 +11,63 @@
  * limitations under the License.
  */
 import { h, Component } from 'preact';
+import { PhotoAlbum } from 'client/google';
 import {
-  tokens,
-  target as tokenEventTarget,
-  getLoginURL,
-  getAlbums,
-} from '../../google';
+  target as loginEventTarget,
+  isLoggedIn,
+  LoginChangeEvent,
+  attemptLogin,
+} from 'client/google/login';
+import AlbumPick from '../album-pick';
 
 interface Props {}
 
 interface State {
   isLoggedIn: boolean;
+  album?: PhotoAlbum;
 }
 
 export default class App extends Component<Props, State> {
   state: State = {
-    isLoggedIn: !!tokens,
+    isLoggedIn: isLoggedIn(),
   };
 
-  private _onTokenChange = () => {
+  private _onLoginChange = (event: LoginChangeEvent) => {
     this.setState({
-      isLoggedIn: !!tokens,
+      isLoggedIn: event.isLoggedIn,
     });
   };
 
   private _onLoginClick = () => {
-    open(getLoginURL());
+    attemptLogin();
   };
 
-  private async _getAlbumData() {
-    const data = await getAlbums();
-    console.log(data);
-  }
+  private _onAlbumPick = (album: PhotoAlbum) => {
+    this.setState({ album });
+  };
 
   componentDidMount() {
-    tokenEventTarget.addEventListener('tokenschange', this._onTokenChange);
-    if (this.state.isLoggedIn) this._getAlbumData();
+    loginEventTarget.addEventListener('loginstatechange', this._onLoginChange);
   }
 
   componentWillUnmount() {
-    tokenEventTarget.removeEventListener('tokenschange', this._onTokenChange);
+    loginEventTarget.removeEventListener(
+      'loginstatechange',
+      this._onLoginChange,
+    );
   }
 
-  componentDidUpdate(_: Props, previousState: State) {
-    if (this.state.isLoggedIn && !previousState.isLoggedIn) {
-      this._getAlbumData();
-    }
-  }
-
-  render({}: Props, { isLoggedIn }: State) {
+  render({}: Props, { isLoggedIn, album }: State) {
     return (
       <div>
         <h2>{isLoggedIn ? 'Logged in' : 'Not logged in'}</h2>
-        {!isLoggedIn && <button onClick={this._onLoginClick}>Log in</button>}
+        {!isLoggedIn ? (
+          <button onClick={this._onLoginClick}>Log in</button>
+        ) : !album ? (
+          <AlbumPick onPick={this._onAlbumPick} />
+        ) : (
+          `Picked ${album.title}`
+        )}
       </div>
     );
   }
