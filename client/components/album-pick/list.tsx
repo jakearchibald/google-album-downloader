@@ -11,7 +11,11 @@
  * limitations under the License.
  */
 import { h, Component } from 'preact';
-import { PhotoAlbumsPage, PhotoAlbum } from 'client/google';
+import {
+  PhotoAlbumsPage,
+  PhotoAlbum,
+  getAllPhotosFromAlbum,
+} from 'client/google';
 
 interface Props {
   hasPreviousPage: boolean;
@@ -36,7 +40,10 @@ export default class AlbumList extends Component<Props, State> {
 
   private _getPickListener(album: PhotoAlbum): () => void {
     if (!this._pickListeners.has(album)) {
-      this._pickListeners.set(album, () => this.props.onPick(album));
+      this._pickListeners.set(album, () => {
+        getAllPhotosFromAlbum(album.id).then(data => console.log(data));
+        this.props.onPick(album);
+      });
     }
     return this._pickListeners.get(album)!;
   }

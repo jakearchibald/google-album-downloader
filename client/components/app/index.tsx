@@ -17,19 +17,25 @@ import {
   isLoggedIn,
   LoginChangeEvent,
   attemptLogin,
+  logout,
 } from 'client/google/login';
 import AlbumPick from '../album-pick';
+import Login from '../login';
+import DirPick from '../dir-pick';
 
 interface Props {}
 
 interface State {
   isLoggedIn: boolean;
   album?: PhotoAlbum;
+  dirHandle?: FileSystemDirectoryHandle;
 }
 
 export default class App extends Component<Props, State> {
   state: State = {
     isLoggedIn: isLoggedIn(),
+    album: undefined,
+    dirHandle: undefined,
   };
 
   private _onLoginChange = (event: LoginChangeEvent) => {
@@ -38,12 +44,16 @@ export default class App extends Component<Props, State> {
     });
   };
 
-  private _onLoginClick = () => {
-    attemptLogin();
+  private _onLogoutClick = () => {
+    logout();
   };
 
-  private _onAlbumPick = (album: PhotoAlbum) => {
+  private _onAlbumPick = (album: PhotoAlbum | undefined) => {
     this.setState({ album });
+  };
+
+  private _onDirPick = (dirHandle: FileSystemDirectoryHandle) => {
+    this.setState({ dirHandle });
   };
 
   componentDidMount() {
@@ -57,17 +67,20 @@ export default class App extends Component<Props, State> {
     );
   }
 
-  render({}: Props, { isLoggedIn, album }: State) {
+  render({}: Props, { isLoggedIn, album, dirHandle }: State) {
     return (
       <div>
-        <h2>{isLoggedIn ? 'Logged in' : 'Not logged in'}</h2>
+        <h2>Log in</h2>
+        <Login isLoggedIn={isLoggedIn} onLogOut={this._onLogoutClick} />
+        <h2>Pick album</h2>
         {!isLoggedIn ? (
-          <button onClick={this._onLoginClick}>Log in</button>
-        ) : !album ? (
-          <AlbumPick onPick={this._onAlbumPick} />
+          <p>Log in first</p>
         ) : (
-          `Picked ${album.title}`
+          <AlbumPick onPick={this._onAlbumPick} pickedAlbum={album} />
         )}
+        <h2>Pick a directory</h2>
+        <p>Ideally this be exclusively for photos from this album.</p>
+        <DirPick dirHandle={dirHandle} onPick={this._onDirPick} />
       </div>
     );
   }

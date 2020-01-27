@@ -16,20 +16,20 @@
  *
  * @param func
  */
-export function queueCalls<T extends (...args: any[]) => any>(
+export function queueCalls<T extends (...args: any[]) => Promise<any>>(
   func: T,
-): (...args: Parameters<T>) => Promise<ReturnType<T>> {
+): (...args: Parameters<T>) => ReturnType<T> {
   let lastCall: Promise<void> = Promise.resolve();
 
-  return (...args: Parameters<T>): Promise<ReturnType<T>> => {
+  return (...args: Parameters<T>): ReturnType<T> => {
     return new Promise((resolve, reject) => {
       lastCall = lastCall
-        .catch(() => {})
         .then(() => {
           const returnPromise = func(...args);
           returnPromise.then(resolve, reject);
           return returnPromise;
-        });
-    });
+        })
+        .catch(() => {});
+    }) as ReturnType<T>;
   };
 }

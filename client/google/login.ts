@@ -10,8 +10,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { queueCalls } from 'client/utils';
-
 const clientID =
   '873414564284-qp6hqgj43g5uea4oac5gs7fkr5ih538e.apps.googleusercontent.com';
 const challengeKey = 'last-code-challenge';
@@ -67,15 +65,10 @@ export class LoginChangeEvent extends Event {
   }
 }
 
-interface RefreshLocalStateOptions {
-  forceReauth?: boolean;
-}
-
-async function refreshLocalState({
-  forceReauth = false,
-}: RefreshLocalStateOptions = {}) {
-  if (forceReauth || !token || Date.now() > token.expires) {
-    setToken(await getTokenSilently());
+function refreshLocalState() {
+  if (!token) return;
+  if (Date.now() > token.expires) {
+    setToken(undefined);
   }
 }
 
@@ -85,10 +78,8 @@ async function refreshLocalState({
  *
  * @param options
  */
-export async function getAccessToken({
-  forceReauth = false,
-}: RefreshLocalStateOptions = {}): Promise<string> {
-  await refreshLocalState({ forceReauth });
+export async function getAccessToken(): Promise<string> {
+  await refreshLocalState();
   if (!token) throw Error('Not logged in');
   return token.access;
 }
@@ -121,7 +112,7 @@ function getLoginURL({ silent = false }: LoginURLOptions = {}): string {
   url.searchParams.set('response_type', 'token');
   url.searchParams.set(
     'scope',
-    'https://www.googleapis.com/auth/photoslibrary.readonly',
+    'https://www.googleapis.com/auth/photoslibrary.readonly openid profile',
   );
   url.searchParams.set('state', codeChallenge);
   if (silent) url.searchParams.set('prompt', 'none');
@@ -175,28 +166,16 @@ function getTokenFromOAuthWindow(win: Window): Token | undefined {
 }
 
 /**
- * Attempt to authenticate the user without showing UI.
- * This is only possible if the user has already given permission.
- */
-const getTokenSilently: () => Promise<Promise<Token | undefined>> = queueCalls(
-  async () => {
-    const url = getLoginURL({ silent: true });
-    const iframe = document.createElement('iframe');
-    iframe.classList.add('hidden');
-    iframe.src = url;
-    document.body.append(iframe);
-    await awaitLoginWindow();
-    return getTokenFromOAuthWindow(iframe.contentWindow!);
-  },
-);
-
-/**
  * Launch a window to perform login.
  */
 export async function attemptLogin() {
   const win = open(getLoginURL())!;
   await awaitLoginWindow();
   setToken(getTokenFromOAuthWindow(win));
+}
+
+export function logout() {
+  setToken(undefined);
 }
 
 function updateLocalState() {
@@ -210,7 +189,7 @@ function updateLocalState() {
 }
 
 function setToken(token: Token | undefined) {
-  localStorage[tokenKey] = JSON.stringify(token);
+  localStorage[tokenKey] = token ? JSON.stringify(token) : '';
   updateLocalState();
 }
 

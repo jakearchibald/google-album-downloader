@@ -10,18 +10,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { getAccessToken } from './login';
+import { getAccessToken, logout } from './login';
 
-interface AuthFetchOptions {
-  forceReauth?: boolean;
-}
-
-async function authFetch(
-  url: string,
-  init?: RequestInit,
-  { forceReauth = false }: AuthFetchOptions = {},
-): Promise<any> {
-  const accessToken = await getAccessToken({ forceReauth });
+async function authFetch(url: string, init?: RequestInit): Promise<any> {
+  const accessToken = await getAccessToken();
   const fetchInit = {
     ...init,
     headers: {
@@ -35,8 +27,7 @@ async function authFetch(
 
   if (data.error) {
     if (data.error.status === 'UNAUTHENTICATED') {
-      // Try again but refresh token
-      return authFetch(url, fetchInit, { forceReauth: true });
+      logout();
     }
     throw new Error(data.error.message);
   }
@@ -55,12 +46,18 @@ export interface PhotoAlbum {
   title: string;
 }
 
-async function* getAlbums(): AsyncGenerator<PhotoAlbumsPage, void, never> {
+interface GetAlbumsOptions {
+  pageSize?: number;
+}
+
+async function* getAlbums({
+  pageSize = 10,
+}: GetAlbumsOptions = {}): AsyncGenerator<PhotoAlbumsPage, void, never> {
   let nextPageToken = '';
 
   while (true) {
     const url = new URL('https://photoslibrary.googleapis.com/v1/albums');
-    url.searchParams.set('pageSize', '50');
+    url.searchParams.set('pageSize', pageSize.toString());
     url.searchParams.set('pageToken', nextPageToken);
     const data = await authFetch(url.href);
 
@@ -118,3 +115,51 @@ export const getAlbumStream = asyncIterToStreamFunc(
   getAlbums,
   new CountQueuingStrategy({ highWaterMark: 2 }),
 );
+
+export interface UserInfo {
+  name: string;
+  avatarBase: string;
+}
+
+export async function getUserInfo(): Promise<UserInfo> {
+  const data = await authFetch(
+    'https://www.googleapis.com/oauth2/v1/userinfo?alt=json',
+  );
+  return {
+    name: data.name,
+    avatarBase: data.picture,
+  };
+}
+
+interface Photo {
+  urlBase: string;
+  id: string;
+  filename: string;
+}
+
+export async function getAllPhotosFromAlbum(albumId: string): Promise<Photo[]> {
+  const allPhotos: Photo[] = [];
+  let nextPageToken = '';
+
+  while (true) {
+    const url = 'https://photoslibrary.googleapis.com/v1/mediaItems:search';
+    const body = new URLSearchParams({
+      albumId,
+      pageSize: '100',
+      pageToken: nextPageToken,
+    });
+    const data = await authFetch(url, { method: 'POST', body });
+
+    for (const item of data.mediaItems) {
+      allPhotos.push({
+        urlBase: item.baseUrl,
+        id: item.id,
+        filename: item.filename,
+      });
+    }
+
+    if (!data.nextPageToken) return allPhotos;
+
+    nextPageToken = data.nextPageToken;
+  }
+}

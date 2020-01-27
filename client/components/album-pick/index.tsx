@@ -15,7 +15,8 @@ import { getAlbumStream, PhotoAlbumsPage, PhotoAlbum } from '../../google';
 import AlbumList from './list';
 
 interface Props {
-  onPick: (album: PhotoAlbum) => void;
+  onPick: (album: PhotoAlbum | undefined) => void;
+  pickedAlbum: PhotoAlbum | undefined;
 }
 
 interface State {
@@ -59,17 +60,27 @@ export default class AlbumPick extends Component<Props, State> {
     }));
   };
 
+  private _onUnpick = () => {
+    this.props.onPick(undefined);
+  };
+
   componentWillUnmount() {
     this._albumReader.cancel();
   }
 
-  render({ onPick }: Props, { albumPages, page }: State) {
+  render({ onPick, pickedAlbum }: Props, { albumPages, page }: State) {
     const albumPage = albumPages[page];
 
     return (
       <div>
-        <h2>Albums</h2>
-        {albumPage ? (
+        {pickedAlbum ? (
+          <p>
+            Picked "{pickedAlbum.title}".{' '}
+            <button onClick={this._onUnpick}>Change</button>
+          </p>
+        ) : !albumPage ? (
+          <div>Loading</div>
+        ) : (
           <AlbumList
             albumPage={albumPage}
             hasPreviousPage={page !== 0}
@@ -77,8 +88,6 @@ export default class AlbumPick extends Component<Props, State> {
             onPrevious={this._onPrevious}
             onPick={onPick}
           />
-        ) : (
-          <div>Loading</div>
         )}
       </div>
     );
