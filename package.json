@@ -13,7 +13,7 @@
     "http-server": "^0.12.1",
     "husky": "^4.0.7",
     "lint-staged": "^9.5.0",
-    "postcss": "^7.0.26",
+    "postcss": "^7.0.36",
     "postcss-nested": "^4.2.1",
     "postcss-url": "^8.0.0",
     "preact": "^10.2.1",
